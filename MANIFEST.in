@@ -1,0 +1,5 @@
+include SECURITY.md
+include personal.example.txt
+include requirements.lock
+include setup.ps1
+include setup.sh

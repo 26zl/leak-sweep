@@ -1,0 +1,11 @@
+# personal.txt — one search term per line (literal text, not regex, case-insensitive).
+# Copy this file to personal.txt and fill in your own values.
+# Terms stay local unless you explicitly enable --search or --deep.
+#
+# Tip: add variants (with/without country code, with/without dots, nicknames, old
+# usernames, previous email addresses) — each line is matched everywhere.
+jane.doe@example.com
+Jane Doe
++1 555 123 4567
+5551234567
+123 Example Street

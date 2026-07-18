@@ -1,0 +1,106 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m py_compile sweep.py gitcheck.py leak_sweep_reporting.py national_id.py
+      - run: python -m pip install "python-stdnum>=2,<3" "phonenumbers>=9,<10"
+      - run: python sweep.py --selftest
+      - run: python -m unittest discover -s tests -v
+      - run: bash -n setup.sh
+
+  dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install uv
+      - run: uv pip install --require-hashes -r requirements.lock --system
+      - run: python -m pip check
+      - run: python -c "import sweep; assert sweep.build_presidio('NO') is not None"
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Validate PowerShell setup syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path .\setup.ps1),
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+      - run: python -m pip install uv
+      - run: uv pip install --require-hashes -r requirements.lock --system
+      - run: python -m pip check
+      - run: python -m py_compile sweep.py gitcheck.py leak_sweep_reporting.py national_id.py
+      - run: python sweep.py --selftest
+      - run: python -m unittest discover -s tests -v
+      - run: python -c "import sweep; assert sweep.build_presidio('NO') is not None"
+
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: python -m pip install uv
+      - run: uv pip install --require-hashes -r requirements-dev.lock --system
+      - run: python -m pip check
+      - run: ruff check .
+      - run: pyright --pythonpath "$(command -v python)"
+      - run: pip-audit --require-hashes -r requirements.lock
+      - run: pip-licenses
+      - run: python -m build --no-isolation
+      - run: python -m pip install --no-deps --no-build-isolation --force-reinstall dist/*.whl
+      - run: leak-sweep --version
+      - run: test -x "$(command -v leak-sweep-gitcheck)"

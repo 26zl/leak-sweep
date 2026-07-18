@@ -1,0 +1,56 @@
+# Private data and local credentials
+personal.txt
+reports/
+work/
+.env
+.env.*
+!.env.example
+*.key
+*.p12
+*.pfx
+*.pem
+
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.pyright/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Build output
+build/
+dist/
+site/
+
+# Editors and local tooling
+.idea/
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+.codex/
+.claude/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Operating systems
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
