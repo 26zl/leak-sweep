@@ -45,7 +45,7 @@ dev = [
     "pip-audit==2.10.1; python_version >= '3.10'",
     "pip-licenses==5.5.5",
     "pyright[nodejs]==1.1.411",
-    "ruff==0.15.21",
+    "ruff==0.15.22",
     "setuptools==83.0.0; python_version >= '3.10'",
     "setuptools==82.0.1; python_version < '3.10'",
     "wheel==0.47.0",
