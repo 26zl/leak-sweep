@@ -104,3 +104,27 @@ jobs:
       - run: python -m pip install --no-deps --no-build-isolation --force-reinstall dist/*.whl
       - run: leak-sweep --version
       - run: test -x "$(command -v leak-sweep-gitcheck)"
+
+  locks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.11"
+      - run: python -m pip install uv
+      # Dependabot bumps the pins in pyproject.toml but cannot regenerate the hashed lock files.
+      - name: Lock files match pyproject.toml
+        run: |
+          pins() { grep -oE '^[A-Za-z0-9._-]+==[^ ;\\]+' "$1" | sort; }
+          pins requirements.lock > "$RUNNER_TEMP/runtime.before"
+          pins requirements-dev.lock > "$RUNNER_TEMP/dev.before"
+          uv pip compile pyproject.toml --python-version 3.9 --universal --generate-hashes -o requirements.lock --quiet
+          uv pip compile pyproject.toml --extra dev --python-version 3.9 --universal --generate-hashes -o requirements-dev.lock --quiet
+          if ! diff "$RUNNER_TEMP/runtime.before" <(pins requirements.lock) || ! diff "$RUNNER_TEMP/dev.before" <(pins requirements-dev.lock); then
+            echo "::error::The lock files are out of date. Run the uv pip compile command at the top of each lock file and commit the result."
+            exit 1
+          fi
