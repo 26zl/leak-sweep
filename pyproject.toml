@@ -41,10 +41,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "build==1.6.0; python_version >= '3.10'",
+    "build==1.6.1; python_version >= '3.10'",
     "pip-audit==2.10.1; python_version >= '3.10'",
     "pip-licenses==5.5.5",
-    "pyright[nodejs]==1.1.413",
+    "pyright[nodejs]==1.1.414",
     "ruff==0.16.8",
     "setuptools==84.0.0; python_version >= '3.10'",
     "setuptools==82.0.1; python_version < '3.10'",
