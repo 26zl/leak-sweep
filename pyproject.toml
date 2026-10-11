@@ -1,7 +1,6 @@
 [build-system]
 requires = [
-    "setuptools==84.0.0; python_version >= '3.10'",
-    "setuptools==82.0.1; python_version < '3.10'",
+    "setuptools==84.0.0",
     "wheel==0.48.0",
 ]
 build-backend = "setuptools.build_meta"
@@ -11,7 +10,7 @@ name = "leak-sweep"
 dynamic = ["version"]
 description = "Scan all your GitHub repos for leaked personal info (secrets, PII, national IDs) so you don't get doxxed."
 readme = "README.md"
-requires-python = ">=3.9,<3.15"
+requires-python = ">=3.10,<3.15"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Laurent Zogaj" }]
@@ -23,7 +22,6 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -41,13 +39,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "build==1.6.1; python_version >= '3.10'",
-    "pip-audit==2.10.1; python_version >= '3.10'",
+    "build==1.6.1",
+    "pip-audit==2.10.1",
     "pip-licenses==5.5.5",
     "pyright[nodejs]==1.1.414",
     "ruff==0.16.9",
-    "setuptools==84.0.0; python_version >= '3.10'",
-    "setuptools==82.0.1; python_version < '3.10'",
+    "setuptools==84.0.0",
     "wheel==0.48.0",
 ]
 
@@ -67,7 +64,7 @@ version = { attr = "sweep.__version__" }
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 extend-exclude = ["reports", "work"]
 
 [tool.ruff.lint]
@@ -76,7 +73,7 @@ select = ["E4", "E7", "E9", "F", "I"]
 [tool.pyright]
 include = ["sweep.py", "gitcheck.py", "leak_sweep_reporting.py", "national_id.py", "tests"]
 exclude = ["reports", "work"]
-pythonVersion = "3.9"
+pythonVersion = "3.10"
 typeCheckingMode = "basic"
 
 [tool.pip-licenses]
