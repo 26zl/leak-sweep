@@ -38,7 +38,7 @@ brew install python gh gitleaks  # then `gh auth login` if you aren't logged in
 
 ### Linux
 
-Install Python 3.9–3.14, Git and GitHub CLI with your distribution's package
+Install Python 3.10–3.14, Git and GitHub CLI with your distribution's package
 manager, install Gitleaks from its official release, then run:
 
 ```sh
@@ -78,7 +78,7 @@ in a few formats, addresses, old usernames). It is **gitignored** and the tool
 refuses to run if it ever becomes git-tracked. Its terms stay local unless you
 explicitly enable `--search` or `--deep`.
 
-> Runs natively on Python 3.9–3.14 on macOS, Linux and Windows. `setup.ps1`
+> Runs natively on Python 3.10–3.14 on macOS, Linux and Windows. `setup.ps1`
 > creates the Windows virtual environment and restricts `personal.txt` to the
 > current Windows account.
 
@@ -187,8 +187,8 @@ bash -n setup.sh
 hash-locked files with [uv](https://docs.astral.sh/uv/) after changing it:
 
 ```sh
-uv pip compile pyproject.toml --python-version 3.9 --universal --generate-hashes -o requirements.lock
-uv pip compile pyproject.toml --extra dev --python-version 3.9 --universal --generate-hashes -o requirements-dev.lock
+uv pip compile pyproject.toml --python-version 3.10 --universal --generate-hashes -o requirements.lock
+uv pip compile pyproject.toml --extra dev --python-version 3.10 --universal --generate-hashes -o requirements-dev.lock
 ```
 
 ## Releases

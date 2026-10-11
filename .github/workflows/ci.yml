@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.11", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.14"]
+        python-version: ["3.10", "3.11", "3.14"]
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -122,8 +122,8 @@ jobs:
           pins() { grep -oE '^[A-Za-z0-9._-]+==[^ ;\\]+' "$1" | sort; }
           pins requirements.lock > "$RUNNER_TEMP/runtime.before"
           pins requirements-dev.lock > "$RUNNER_TEMP/dev.before"
-          uv pip compile pyproject.toml --python-version 3.9 --universal --generate-hashes -o requirements.lock --quiet
-          uv pip compile pyproject.toml --extra dev --python-version 3.9 --universal --generate-hashes -o requirements-dev.lock --quiet
+          uv pip compile pyproject.toml --python-version 3.10 --universal --generate-hashes -o requirements.lock --quiet
+          uv pip compile pyproject.toml --extra dev --python-version 3.10 --universal --generate-hashes -o requirements-dev.lock --quiet
           if ! diff "$RUNNER_TEMP/runtime.before" <(pins requirements.lock) || ! diff "$RUNNER_TEMP/dev.before" <(pins requirements-dev.lock); then
             echo "::error::The lock files are out of date. Run the uv pip compile command at the top of each lock file and commit the result."
             exit 1

@@ -12,13 +12,13 @@ if (Get-Command py.exe -ErrorAction SilentlyContinue) {
     $pythonExe = "python.exe"
     $pythonPrefix = @()
 } else {
-    throw "Python is missing. Install Python 3.9-3.14 and rerun this script."
+    throw "Python is missing. Install Python 3.10-3.14 and rerun this script."
 }
 
 & $pythonExe @pythonPrefix -c `
-    "import sys; raise SystemExit(not ((3, 9) <= sys.version_info[:2] < (3, 15)))"
+    "import sys; raise SystemExit(not ((3, 10) <= sys.version_info[:2] < (3, 15)))"
 if ($LASTEXITCODE -ne 0) {
-    throw "Python 3.9-3.14 is required."
+    throw "Python 3.10-3.14 is required."
 }
 
 $toolHints = @{
