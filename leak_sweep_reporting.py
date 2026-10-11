@@ -275,19 +275,21 @@ def render_md(results: list[dict], meta: dict, raw: bool = False, extras: dict |
         throttled = [s["term"] for s in ex["search"] if s.get("error")]
         for s in ex["search"]:
             own = f"{meta['user']}/".lower()
-            own_url = f"github.com/{meta['user']}/".lower()
+            # Code/commit self-hits are already covered by the clone scan, so drop
+            # them; issue and PR text is not in the git tree, so keep those hits
+            # even in your own repos.
             code = [x for x in s["code"] if not x.lower().startswith(own)]
             com = [x for x in s["commits"] if not x.lower().startswith(own)]
-            iss = [x for x in s.get("issues", []) if own_url not in x.lower()]
+            iss = list(s.get("issues", []))
             if code or com or iss:
                 found = True
-                L.append(f"- {md_code(s['term'])} in others' repos (totals: "
+                L.append(f"- {md_code(s['term'])} (totals: "
                          f"{s.get('code_total', 0)} code, {s.get('commits_total', 0)} commits, "
                          f"{s.get('issues_total', 0)} issues/PRs):")
                 for x in code[:10]:
-                    L.append(f"  - code: {md_code(x)}")
+                    L.append(f"  - code (other repos): {md_code(x)}")
                 for x in com[:10]:
-                    L.append(f"  - commit: {md_code(x)}")
+                    L.append(f"  - commit (other repos): {md_code(x)}")
                 for x in iss[:10]:
                     L.append(f"  - issue/PR: {md_code(x)}")
         if not found:
