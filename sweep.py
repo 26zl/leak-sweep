@@ -368,6 +368,17 @@ def repo_storage_name(repo: dict) -> str:
     return f"{readable}-{digest}"
 
 
+def fetch_pull_refs(d: Path) -> None:
+    """Fetch PR head refs so commits that live only in refs/pull/*/head (e.g. a
+    squash-merged PR whose branch was deleted) are scanned too. Repos without pull
+    requests match nothing; any failure is ignored so the main scan still runs."""
+    subprocess.run(
+        ["git", "-C", str(d), "fetch", "origin", "--quiet", "--prune",
+         "+refs/pull/*/head:refs/remotes/origin/pull/*"],
+        capture_output=True,
+    )
+
+
 def clone_or_update(repo: dict) -> Path:
     d = WORK / repo_storage_name(repo)
     if d.exists():
@@ -397,6 +408,7 @@ def clone_or_update(repo: dict) -> Path:
             shutil.rmtree(d)
     if not d.exists():
         run(["gh", "repo", "clone", repo["nameWithOwner"], d, "--", "--quiet"])
+    fetch_pull_refs(d)
     dirty = subprocess.run(
         ["git", "-C", str(d), "status", "--porcelain"], capture_output=True, text=True
     )
@@ -693,10 +705,54 @@ def check_forks(repos: list[dict]) -> list[dict]:
     return out
 
 
-def scan_gists(terms: list[str], region: str, regions) -> list[dict]:
-    """Scan your gists (public + secret) for watchlist terms and PII."""
+def _clone_gist(gist_id: str, pull_url: str | None) -> Path | None:
+    """Clone a gist's full git history (public or secret) under WORK; None on failure.
+
+    The gh token is supplied through a one-shot credential helper so secret gists
+    clone without the token landing in argv or the clone's stored config.
+    """
+    url = pull_url or f"https://gist.github.com/{gist_id}.git"
+    dest = WORK / f"gist-{re.sub(r'[^A-Za-z0-9._-]+', '__', gist_id)}"
+    shutil.rmtree(dest, ignore_errors=True)
+    helper = '!f() { echo username=x-access-token; echo "password=$(gh auth token)"; }; f'
+    done = subprocess.run(
+        ["git", "-c", "credential.helper=", "-c", f"credential.helper={helper}",
+         "clone", "--quiet", url, str(dest)],
+        capture_output=True, text=True,
+    )
+    if done.returncode != 0:
+        shutil.rmtree(dest, ignore_errors=True)
+        return None
+    return dest
+
+
+def _gist_hits_from_result(res: dict) -> list[dict]:
+    """Flatten a repo-style scan result into gist hit records ({entity, value, ...}).
+
+    Secret values are reduced to their rule id so raw secrets never reach the report.
+    """
+    hits: list[dict] = []
+    for f in res["secrets"]:
+        hits.append({"entity": "secret", "value": f.get("RuleID", "secret"),
+                     "where": f.get("File", "")})
+    for f in res["watchlist_history"]:
+        hits.append({"entity": "watchlist", "value": f.get("term", f.get("RuleID", ""))})
+    for f in res.get("national_id_history", []):
+        hits.append({"entity": "NATIONAL_ID", "value": f.get("Secret", ""),
+                     "country": f.get("country", ""), "type": f.get("type", "")})
+    for p in res["pii"]:
+        hits.append({"entity": p["entity"], "value": p["value"], "where": p.get("file", "")})
+    for h in res["identities"]:
+        hits.append({"entity": "identity", "value": h.get("identity", "")})
+    for h in res["path_hits"]:
+        hits.append({"entity": "path", "value": h.get("path", "")})
+    return hits
+
+
+def scan_gists(terms: list[str], region: str, regions, cfg: Path, analyzer) -> list[dict]:
+    """Scan your gists (public + secret) over their full git history, like repos."""
     p = run(["gh", "api", "--paginate", "/gists",
-             "--jq", ".[] | {id, public, desc: .description}"])
+             "--jq", ".[] | {id, public, desc: .description, pull: .git_pull_url}"])
     findings = []
     for line in p.stdout.splitlines():
         if not line.strip():
@@ -705,17 +761,27 @@ def scan_gists(terms: list[str], region: str, regions) -> list[dict]:
             g = json.loads(line)
         except json.JSONDecodeError as e:
             raise RuntimeError("GitHub returned invalid gist JSON") from e
-        content = run(
-            ["gh", "api", f"/gists/{g['id']}", "--jq", ".files[].content"]
-        ).stdout
-        hits = []
-        fast_scan(content, f"gist:{g['id']}",
-                  lambda e, v, rel, ln, s=None, **x: hits.append({"entity": e, "value": v, **x}),
-                  region, regions)
-        low = content.lower()
-        for t in terms:
-            if t.lower() in low:
-                hits.append({"entity": "watchlist", "value": t})
+        hits: list[dict] = []
+        d = _clone_gist(g["id"], g.get("pull"))
+        if d is not None:
+            try:
+                res = empty_result({"name": g["id"], "isPrivate": not g.get("public", False)})
+                scan_tree(d, res, cfg, terms, analyzer, region, regions)
+                hits = _gist_hits_from_result(res)
+            finally:
+                shutil.rmtree(d, ignore_errors=True)
+        else:
+            # Clone failed (e.g. auth) — fall back to the current revision via the API.
+            content = run(
+                ["gh", "api", f"/gists/{g['id']}", "--jq", ".files[].content"]
+            ).stdout
+            fast_scan(content, f"gist:{g['id']}",
+                      lambda e, v, rel, ln, s=None, **x: hits.append({"entity": e, "value": v, **x}),
+                      region, regions)
+            low = content.lower()
+            for t in terms:
+                if t.lower() in low:
+                    hits.append({"entity": "watchlist", "value": t})
         if hits:
             findings.append({"id": g["id"], "public": g.get("public"),
                              "desc": g.get("desc"), "hits": hits})
@@ -1213,7 +1279,8 @@ def main():
                 extras["search"] = search_github(terms, user)
             if args.gists:
                 try:
-                    extras["gists"] = scan_gists(terms, args.region.upper(), regions)
+                    extras["gists"] = scan_gists(
+                        terms, args.region.upper(), regions, cfg, analyzer)
                 except Exception as e:
                     extras["errors"].append(f"gists: {type(e).__name__}: {e}")
             if args.forks:
@@ -1248,11 +1315,13 @@ def main():
         print("⚠ NER was REQUESTED but Presidio was DISABLED — names/locations were NOT "
               "scanned. See the fix hint above.")
     own_prefix = f"{user}/".lower()
-    own_url = f"github.com/{user}/".lower()
+    # Code/commit hits in your own repos duplicate the clone scan, so exclude them
+    # from the exit code; issue/PR hits are not covered by the clone scan, so every
+    # issue/PR hit counts even in your own repos.
     ext_terms = sum(
         bool([x for x in s["code"] + s["commits"]
               if not x.lower().startswith(own_prefix)]
-             + [x for x in s.get("issues", []) if own_url not in x.lower()])
+             + list(s.get("issues", [])))
         for s in extras.get("search", [])
     )
     external_any_findings = (ext_terms + len(extras.get("gists", []))
@@ -1263,7 +1332,8 @@ def main():
     )
     ext_notes = []
     if ext_terms:
-        ext_notes.append(f"{ext_terms} watchlist term(s) found in OTHERS' repos")
+        ext_notes.append(
+            f"{ext_terms} watchlist term(s) found in others' repos or your issues/PRs")
     if extras.get("forks"):
         ext_notes.append(f"{len(extras['forks'])} of your repos have forks")
     if extras.get("gists"):
