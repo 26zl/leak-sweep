@@ -43,7 +43,7 @@ dev = [
     "pip-audit==2.10.1",
     "pip-licenses==5.5.5",
     "pyright[nodejs]==1.1.414",
-    "ruff==0.16.9",
+    "ruff==0.17.0",
     "setuptools==84.0.0",
     "wheel==0.48.0",
 ]
