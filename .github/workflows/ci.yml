@@ -2,6 +2,7 @@ name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
@@ -98,6 +99,8 @@ jobs:
       - run: python -m pip check
       - run: ruff check .
       - run: pyright --pythonpath "$(command -v python)"
+      # en-core-web-sm is installed from a GitHub release wheel, not from PyPI, so pip-audit
+      # lists it as skipped. That is expected; only known vulnerabilities fail this step.
       - run: pip-audit --require-hashes -r requirements.lock
       - run: pip-licenses
       - run: python -m build --no-isolation
