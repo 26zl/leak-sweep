@@ -6,8 +6,8 @@ cd "$(dirname "$0")"
 for tool in gh git gitleaks python3; do
   command -v "$tool" >/dev/null || { echo "Missing '$tool' — install it first (see README)."; exit 1; }
 done
-if ! python3 -c 'import sys; raise SystemExit(not ((3, 10) <= sys.version_info[:2] < (3, 15)))'; then
-  echo "Python 3.10–3.14 is required."
+if ! python3 -c 'import sys; raise SystemExit(not ((3, 11) <= sys.version_info[:2] < (3, 15)))'; then
+  echo "Python 3.11–3.14 is required."
   exit 1
 fi
 
