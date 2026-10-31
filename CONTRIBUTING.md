@@ -9,7 +9,7 @@ keep test data synthetic.
 
 ## Development setup
 
-You need Python 3.10–3.14, Git, the GitHub CLI (`gh`) and
+You need Python 3.11–3.14, Git, the GitHub CLI (`gh`) and
 [gitleaks](https://github.com/gitleaks/gitleaks); the README lists per-platform
 installs. [uv](https://docs.astral.sh/uv/) is only needed to regenerate the
 lock files.
@@ -40,7 +40,7 @@ bash -n setup.sh
 ```
 
 Tests are standard `unittest` modules in `tests/`; add a `test_*.py` file or
-extend an existing one. Code targets Python 3.10 syntax with 100-character
+extend an existing one. Code targets Python 3.11 syntax with 100-character
 lines; `ruff` and `pyright` are configured in `pyproject.toml`.
 
 `pip-audit` lists `en-core-web-sm` as skipped because the spaCy model is
@@ -50,13 +50,13 @@ the check only fails on known vulnerabilities in the PyPI packages.
 ## Dependencies
 
 `pyproject.toml` is the source of truth. `requirements.lock` and
-`requirements-dev.lock` are hash-locked with uv for Python 3.10–3.14 on all
+`requirements-dev.lock` are hash-locked with uv for Python 3.11–3.14 on all
 platforms, and CI's `locks` job fails when they no longer match
 `pyproject.toml`. After changing a dependency, regenerate both:
 
 ```sh
-uv pip compile pyproject.toml --python-version 3.10 --universal --generate-hashes -o requirements.lock
-uv pip compile pyproject.toml --extra dev --python-version 3.10 --universal --generate-hashes -o requirements-dev.lock
+uv pip compile pyproject.toml --python-version 3.11 --universal --generate-hashes -o requirements.lock
+uv pip compile pyproject.toml --extra dev --python-version 3.11 --universal --generate-hashes -o requirements-dev.lock
 ```
 
 To move a single package, for example after a security advisory, add
@@ -72,7 +72,7 @@ before merging.
 - Never commit `personal.txt`, `reports/` or `work/`; they are gitignored on
   purpose and the tool refuses to run if `personal.txt` is tracked.
 - CI must pass on the pull request: self-test and unit tests on Python
-  3.10–3.14 (Linux) and 3.11 (Windows), the locked installs, the `quality`
+  3.11–3.14 (Linux) and 3.11 (Windows), the locked installs, the `quality`
   job and the lock-file check.
 
 ## Releases

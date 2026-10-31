@@ -10,7 +10,7 @@ name = "leak-sweep"
 dynamic = ["version"]
 description = "Scan all your GitHub repos for leaked personal info (secrets, PII, national IDs) so you don't get doxxed."
 readme = "README.md"
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.11,<3.15"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Laurent Zogaj" }]
@@ -22,7 +22,6 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -64,7 +63,7 @@ version = { attr = "sweep.__version__" }
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 extend-exclude = ["reports", "work"]
 
 [tool.ruff.lint]
@@ -73,7 +72,7 @@ select = ["E4", "E7", "E9", "F", "I"]
 [tool.pyright]
 include = ["sweep.py", "gitcheck.py", "leak_sweep_reporting.py", "national_id.py", "tests"]
 exclude = ["reports", "work"]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 typeCheckingMode = "basic"
 
 [tool.pip-licenses]
