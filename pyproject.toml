@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools==84.0.0",
+    "setuptools==84.2.1",
     "wheel==0.48.0",
 ]
 build-backend = "setuptools.build_meta"
@@ -44,7 +44,7 @@ dev = [
     "pip-licenses==5.5.5",
     "pyright[nodejs]==1.1.414",
     "ruff==0.16.9",
-    "setuptools==84.0.0",
+    "setuptools==84.2.1",
     "wheel==0.48.0",
 ]
 
